@@ -8,7 +8,7 @@ from deuces.deuces import Card, Deck, Evaluator
 from .player import Player
 
 class Table(object):
-    BLIND_INCREMENTS = [[10,25],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,10000],[600,1200],[800,1600],[1000,2000]]
+    BLIND_INCREMENTS = [[10,25],[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,1000],[600,1200],[800,1600],[1000,2000]]
 
     def __init__(self, seats = 8, quiet = False, training = False):
         self._blind_index = 0
