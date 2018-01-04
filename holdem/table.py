@@ -25,7 +25,7 @@ class Table(object):
         self._number_of_hands = 0
 
         # fill seats with dummy players
-        self._seats = [Player(-1,-1,0,'empty',0,None,True) for _ in range(seats)]
+        self._seats = [Player(0,'empty',0,None,True) for _ in range(seats)]
         self.emptyseats = seats
         self._player_dict = {}
 
@@ -212,9 +212,9 @@ class Table(object):
         self._discard.append(self._deck.draw(1)) #burn
         self.community.append(self._deck.draw(1))
 
-    def add_player(self, host, port, playerID, name, stack, game):
+    def add_player(self, playerID, name, stack, game):
         if playerID not in self._player_dict:
-            new_player = Player(host, port, playerID, name, stack, game)
+            new_player = Player(playerID, name, stack, game)
             for i,player in enumerate(self._seats):
                 if player.emptyplayer:
                     self._seats[i] = new_player

@@ -14,8 +14,7 @@ from keras.optimizers import *
 
 
 class PlayerControl(object):
-    def __init__(self, host, port, playerID, game, is_ai=True, model=None, train=None, nb_frames=None, name='Alice', stack=5000):
-        #self.server = xmlrpc.client.ServerProxy('http://0.0.0.0:8000')
+    def __init__(self, playerID, game, is_ai=True, model=None, train=None, nb_frames=None, name='Alice', stack=5000):
         self.game = game
         self.daemon = True
 
@@ -29,21 +28,11 @@ class PlayerControl(object):
             batch_size = 5000
 
             model = Sequential()
-            # model.add(Convolution1D(32, 3, activation='relu', input_shape=(nb_frames, grid_size)))
-            # model.add(Convolution1D(32, 3, activation='relu'))
-            # model.add(Convolution1D(16, 3, activation='relu'))
-            # model.add(Flatten())
             model.add(LSTM(lstm_size, return_sequences=True, input_shape=(nb_frames, grid_size)))
             model.add(Dropout(0.2))
             model.add(LSTM(int(lstm_size / 2), return_sequences=True))
             model.add(Dropout(0.2))
             model.add(LSTM(int(lstm_size / 4)))
-            # model.add(Dense(int(hidden_size), activation='relu', input_shape=(nb_frames, grid_size)))
-            # model.add(Dropout(0.2))
-            # model.add(Dense(int(hidden_size/2), activation='relu'))
-            # model.add(Dropout(0.2))
-            # model.add(Dense(int(hidden_size/4), activation='relu'))
-            # model.add(Dense(6))
             model.compile(RMSprop(), 'MSE')
             model._make_predict_function()
 
@@ -66,8 +55,6 @@ class PlayerControl(object):
         self.playerID = playerID
 
         self._name = name
-        self.host = host
-        self.port = port
         self._stack = stack
         self._originalstack = stack
         self._hand = []
@@ -147,7 +134,7 @@ class PlayerControl(object):
             self.train.apply_epoch()
             self.clear_frames()
         # print('Player', self.playerID, 'joining game')
-        self.game.add_player(self.host, self.port, self.playerID, self._name, self._stack, self)
+        self.game.add_player(self.playerID, self._name, self._stack, self)
 
     def remove_player(self):
         self.game.remove_player(self.playerID)
@@ -295,43 +282,3 @@ class PlayerControl(object):
     def won_hand(self):
         self.train.won_hand()
 
-# class PlayerControlProxy(object):
-#     def __init__(self,player):
-#         self._quit = False
-#
-#         self._player = player
-#         self.server = SimpleXMLRPCServer((self._player.host, self._player.port), logRequests=False, allow_none=True)
-#         self.server.register_instance(self, allow_dotted_names=True)
-#         Thread(target = self.run).start()
-#
-#     def run(self):
-#         while not self._quit:
-#             self.server.handle_request()
-#
-#     def player_move(self, output_spec):
-#         return self._player.player_move(output_spec)
-#
-#     def print_table(self, table_state):
-#         self._player.print_table(table_state)
-#
-#     def join(self):
-#         self._player.add_player()
-#
-#     def rejoin_new(self):
-#         self._player.rejoin_new()
-#
-#     def rejoin(self):
-#         self._player.rejoin()
-#
-#     def get_ai_id(self):
-#         return self._player.get_ai_id()
-#
-#     def save_ai_state(self):
-#         self._player.save_ai_state()
-#
-#     def delete_ai(self):
-#         self._player.delete_ai()
-#
-#     def quit(self):
-#         self._player.server.remove_player(self._player.playerID)
-#         self._quit = True

@@ -37,7 +37,6 @@ model._make_predict_function()
 trainers = []
 for i in range(1, seats + 1):
     trainers.append(Train())
-    # pp = PlayerControlProxy(p)
 
 epoch = 0
 while True:
