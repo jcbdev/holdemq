@@ -2,10 +2,20 @@
 
 A self-learning keras based implementation of QLearning using experince replay to learn poker
 
+Python based texas holdem game inspired by alexboloi's nnholdem.  AI has been entirely replaced with an implementation of QLearning over Keras.  Can use tensorflow and theano over cpu/gpu as far as I know.
+
+Currently each AI player has its own memory used for experience replay but train the same underlying model. Currently configured 10 AI players play themselves ad infinitum learning as they go.  Human player implementation has been left (from nn-holdem) but will be stripped out in favour of potentially a slack bot or website to allow a more friendly interaction
+
+This is still early stages but general road map is:
+* Implement multi-table so the network can run more than one game and increase the speed it can learn at
+* Add model snapshots at regular intervals so can be restarted
+* Allow model snapshots to be used by temporary "offline" tables that allow humans to play the AI
+* Build an interface (slack/website) to create games and interact with the most current snapshot of the model
+
 ## Credits:
-* https://github.com/farizrahman4u/qlearning4k
-* https://github.com/alexbeloi/nn-holdem
-* https://github.com/worldveil/deuces
+* qlearning4k - https://github.com/farizrahman4u/qlearning4k
+* nn-holdem - https://github.com/alexbeloi/nn-holdem
+* deuces - https://github.com/worldveil/deuces
 
 ## License
 The MIT License (MIT)
