@@ -1,9 +1,6 @@
-import xmlrpc.client
 
 class Player(object):
-    def __init__(self, host, port, playerID, name, stack, emptyplayer = False):
-        self._host = host
-        self._port = port
+    def __init__(self, playerID, name, stack, control, emptyplayer = False):
         self._name = name
         self.playerID = playerID
 
@@ -22,8 +19,7 @@ class Player(object):
         self.playedthisround = False
         self.sitting_out = True
 
-        self._address = 'http://%s:%s' % (host, port)
-        self.server = xmlrpc.client.ServerProxy(self._address)
+        self.control = control
 
     def get_seat(self):
         return self._seat

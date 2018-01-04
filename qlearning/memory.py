@@ -2,6 +2,7 @@ import numpy as np
 from random import sample
 from keras import backend as K
 
+
 class Memory:
 
     def __init__(self):

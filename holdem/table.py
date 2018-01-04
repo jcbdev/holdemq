@@ -1,8 +1,3 @@
-import time
-import uuid
-from threading import Thread, Lock
-import xmlrpc.client
-from xmlrpc.server import SimpleXMLRPCServer
 
 from deuces.deuces import Card, Deck, Evaluator
 from .player import Player
@@ -30,16 +25,12 @@ class Table(object):
         self._number_of_hands = 0
 
         # fill seats with dummy players
-        self._seats = [Player(-1,-1,0,'empty',0,True) for _ in range(seats)]
+        self._seats = [Player(-1,-1,0,'empty',0,None,True) for _ in range(seats)]
         self.emptyseats = seats
         self._player_dict = {}
 
-        self.teacher = xmlrpc.client.ServerProxy('http://0.0.0.0:8080')
-
         self._quiet = quiet
         self._training = training
-        self._run_thread = Thread(target = self.run, args=())
-        self._run_thread.daemon = True
 
     def start(self):
         self._run_thread.start()
@@ -50,8 +41,7 @@ class Table(object):
 
     def run_game(self):
         self.ready_players()
-        # for p in self._seats:
-        #     print('Player ',p.playerID, ' playing hand: ', p.playing_hand, 'sitting out', p.sitting_out)
+
         players = [player for player in self._seats if not player.emptyplayer and not player.sitting_out]
 
         self._number_of_hands = 1
@@ -80,16 +70,16 @@ class Table(object):
             if len([p for p in players if p.playing_hand]) == 1:
                 winner = [p for p in players if p.playing_hand][0]
                 if self._training:
-                    self.teacher.add_winner(winner.server.get_ai_id())
+                    winner.control.set_win()
                 break
 
-            if self._number_of_hands == 200:
-                print('no winner in 200 hands')
-                break
+            # if self._number_of_hands == 200:
+            #     print('no winner in 200 hands')
+            #     break
 
     def start_hand(self, players):
         players = [p for p in players if p.playing_hand]
-        assert sum([p.stack for p in players]) == 2000*len(self._seats)
+        assert sum([p.stack for p in players]) == 5000*len(self._seats)
         self.new_round()
         self._round=0
 
@@ -121,7 +111,7 @@ class Table(object):
                     player = self._next(players, player)
                     continue
                 # print('requesting move from ',player.playerID)
-                move = player.server.player_move(self.output_state(player))
+                move = player.control.player_move(self.output_state(player))
 
                 if move[0] == 'call':
                     self.player_bet(player, self._tocall)
@@ -158,7 +148,7 @@ class Table(object):
             self.new_round()
             if not self._quiet:
                 print('totalpot', self._totalpot)
-            assert sum([p.stack for p in self._seats]) + self._totalpot == 2000*len(self._seats)
+            assert sum([p.stack for p in self._seats]) + self._totalpot == 5000*len(self._seats)
 
         self.resolve_game(players)
         self.reset()
@@ -222,9 +212,9 @@ class Table(object):
         self._discard.append(self._deck.draw(1)) #burn
         self.community.append(self._deck.draw(1))
 
-    def add_player(self, host, port, playerID, name, stack):
+    def add_player(self, host, port, playerID, name, stack, game):
         if playerID not in self._player_dict:
-            new_player = Player(host, port, playerID, name, stack)
+            new_player = Player(host, port, playerID, name, stack, game)
             for i,player in enumerate(self._seats):
                 if player.emptyplayer:
                     self._seats[i] = new_player
@@ -306,14 +296,19 @@ class Table(object):
 
                 # find players involved in given side_pot, compute the winner(s)
                 pot_contributors = [p for p in players if p.lastsidepot >= pot_idx]
-                winning_rank = min([p.handrank for p in pot_contributors])
-                winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
+                if len(pot_contributors) == 0:
+                    winning_rank = min([p.handrank for p in players])
+                    winning_players = [p for p in players if p.handrank == winning_rank]
+                else:
+                    winning_rank = min([p.handrank for p in pot_contributors])
+                    winning_players = [p for p in pot_contributors if p.handrank == winning_rank]
 
                 for player in winning_players:
                     split_amount = int(self._side_pots[pot_idx]/len(winning_players))
                     if not self._quiet:
                         print('Player', player.playerID, 'wins side pot (',int(self._side_pots[pot_idx]/len(winning_players)),')')
                     player.refund(split_amount)
+                    player.control.won_hand()
                     self._side_pots[pot_idx] -= split_amount
 
                 # any remaining chips after splitting go to the winner in the earliest position
@@ -349,24 +344,3 @@ class Table(object):
         'lastraise':self._lastraise,
         'minraise':max(self._bigblind, self._lastraise + self._tocall)}
 
-class TableProxy(object):
-    def __init__(self, table):
-        self._table = table
-        self.server = SimpleXMLRPCServer(('0.0.0.0', 8000), logRequests=False, allow_none=True)
-        self.server.register_instance(self, allow_dotted_names=True)
-        Thread(target=self.server.serve_forever).start()
-
-    def get_table_state(self, playerID):
-        return self._table.output_state(table._player_dict.get(playerID, None))
-
-    def add_player(self, host, port, playerID, name, stack):
-        self._table.add_player(host, port, playerID, name, stack)
-
-    def remove_player(self, playerID):
-        self._table.remove_player(playerID)
-
-    def run_game(self):
-        self._table.run_game()
-
-    def run_forever(self):
-        self._table.start()
